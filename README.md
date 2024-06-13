@@ -430,7 +430,7 @@ plotMKmodel(MK_3state)
 - the scripts in the folder are examples, these codes were used in every class
 - the sripts use several R packages like: `ggplot2`,`ggthemes`,`caper`,`phylolm`,`ape` and `diversitree` .....
 
-## [Tables and Files folder](Tables and Files)
+## [Tables and Files folder](Tables)
 - this folder has several tables from the publication
 
 ## [Stats folder](Stats)
