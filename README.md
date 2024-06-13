@@ -431,7 +431,7 @@ plotMKmodel(MK_3state)
 - the sripts use several R packages like: `ggplot2`,`ggthemes`,`caper`,`phylolm`,`ape` and `diversitree` .....
 
 ## [Tables and Files folder](Tables)
-- this folder has several tables from the publication
+- this folder has several tables and files from the publication
 
 ## [Stats folder](Stats)
 - this folder has several statistical results used in this study
