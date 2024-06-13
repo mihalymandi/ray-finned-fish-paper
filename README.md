@@ -7,9 +7,6 @@ This study includes several analysis on the connections between ferilization and
 We carried out stochastic character reconstruction for parental care types, episodes, and modes. We also calculated evolutionary transition rates between character combinations of parental care and the mode of fertilization. We also used Phylogenetic Generalised Least Squares (PGLS) model in the comparisions.
 
 ## Example Codes
-To visualize the transition rates and character reconstructions we used .....
-
-
 
 To visualize our data on phylogenetic scale, we used the `caper`, `ggtree`, `ape` and `diversitree` R packages.
 
@@ -234,8 +231,191 @@ trait.plot(a.tre5, dat=m4.df,
 
 ```
 
-To analyse our data we used PGLS and corHMM models
+To analyse our data we used PGLS models
 
+```ruby
+#PGLS
+setwd("d:/Old PC Documents/University/DE/OTKA/OTKA 2019/Vertebrate Care/vertebrate_updated")
+library(caper)
+library(ape)
+library(diversitree)
+library(ggplot2)
+
+m.df <- read.csv2(file = "Fish_care_noNA.csv")
+names(m.df)
+nrow(m.df) #7601
+summary(m.df)
+m.df$Care_presence <- as.factor(m.df$Care_presence)
+
+a.tre <- read.tree(file="teleost.tre")
+
+m.df$Fertilization.mode_ext<- as.factor(m.df$Fertilization.mode_ext)
+summary(m.df$Fertilization.mode_ext)
+
+m.df$Fertilization.mode_restr<- as.factor(m.df$Fertilization.mode_restr)
+summary(m.df$Fertilization.mode_restr)
+
+
+names(m.df)
+summary(m.df$Care_bias_score)
+cdat1 <- comparative.data(data = m.df, phy = a.tre, names.col = "Species", na.omit = FALSE)
+
+
+mod1 <- pgls(Care_bias_score ~ Fertilization.mode, data = cdat1, lambda = "ML",  bounds = list( lambda = c(0.01, 0.99)))
+summary(mod1)
+
+#PhyloLMs
+library(caper)
+library(ape)
+library(diversitree)
+library(phylolm)
+library(corHMM)
+library(MuMIn)
+
+m2.df <- m.df[!is.na(m.df$Fry_care) & 
+                !is.na(m.df$Care_bias_score   ) 
+              #&
+              # !is.na(m.df$Female_fry_care) 
+              ,]
+nrow(m2.df) #7601
+
+#onlycaring
+m2.df <- m2.df[(m2.df$Care_presence %in% "Present"),]
+nrow(m2.df) # 2377
+
+names(m2.df)
+m3.df=subset(m2.df, select= c(Species, Care_bias_score, Fry_care))
+
+#drop missing species
+(a.lab <- a.tre$tip.label)
+(t <- table(a.lab))
+t[t>1]
+a.lab[order(a.lab)]
+attributes(a.tre)
+
+dobni <-a.lab[!a.lab %in% m3.df$Species]
+(a.tre2 <- drop.tip(a.tre, dobni))
+
+#remove missing species from data frame
+(a2.lab <- a.tre2$tip.label)
+
+(sp <- unique(m3.df$Species))
+t <- table(a2.lab)
+t[t>1]
+t.sp <- table(sp)
+t.sp[t.sp>1]
+(faban <- sp[sp %in% a2.lab])  #7581
+(nincsfaban <- sp[!(sp %in% a2.lab)])  #4375
+(nincsfaban <- nincsfaban[order(nincsfaban)])
+m4.df <- m3.df[m3.df$Species %in% faban,]
+summary(m4.df)
+
+
+row.names(m4.df) <- m4.df$Species
+(sp3 <- unique(m4.df$Species))
+(nincsadatban <- a.lab[!a.lab %in% sp3]) #OK
+
+nrow(m4.df) #7581
+care.mod <- phylolm(as.numeric(as.character(Care_bias_score)) ~ Fry_care,
+                    phy=a.tre2, method = c("logistic_MPLE"),
+                    data=m4.df, boot=100)
+summary(care.mod)
+```
+
+To analyse our data we used `corHMM` models.
+
+```ruby
+#corHMM
+library(caper)
+library(ggplot2)
+require(ape)
+require(expm)
+require(corHMM)
+
+m.df <- read.csv2(file = "Fish_care_noNA.csv")
+names(m.df)
+nrow(m.df) #7601
+summary(m.df)
+
+a.tre <- read.tree(file="teleost.tre")
+a.tre <- makeLabel(a.tre)
+a.tre
+
+#Fertilisation
+m.df$Fertilization.mode_ext  <- as.factor(m.df$Fertilization.mode_ext )
+summary(m.df$Fertilization.mode_ext )
+m.df$Care_bias_binary <- as.factor(m.df$Care_bias_binary  )
+summary(m.df$Care_bias_binary  )
+
+#here the script below is for making current Figure 5. 
+#For making Figure 4 which is much more simple, you need the following variables:
+# Fertilization_binary & Care_presence  for Fig4A
+# Fertilization_binary_restricted & Care_presence  for Fig4B
+
+#filter for species with
+m2.df <- m.df[!is.na(m.df$Fertilization.mode_ext) & 
+                !is.na(m.df$Care_bias_binary) 
+              ,]
+nrow(m2.df) #7302 sp
+
+m3.df=subset(m2.df, select= c(Species, Fertilization.mode_ext, Care_bias_binary))
+m3.df
+
+#drop missing species
+(a.lab <- a.tre$tip.label)
+(t <- table(a.lab))
+t[t>1]
+a.lab[order(a.lab)]
+attributes(a.tre)
+
+dobni <-a.lab[!a.lab %in% m3.df$Species]
+(a.tre2 <- drop.tip(a.tre, dobni))
+
+#remove missing species from data frame
+(a2.lab <- a.tre2$tip.label)
+
+(sp <- unique(m3.df$Species))
+t <- table(a2.lab)
+t[t>1]
+t.sp <- table(sp)
+t.sp[t.sp>1]
+(faban <- sp[sp %in% a2.lab])  #7289
+(nincsfaban <- sp[!(sp %in% a2.lab)])  #13
+(nincsfaban <- nincsfaban[order(nincsfaban)])
+m4.df <- m3.df[m3.df$Species %in% faban,]
+summary(m4.df)
+
+row.names(m4.df) <- m4.df$Species
+(sp3 <- unique(m4.df$Species))
+(nincsadatban <- a.lab[!a.lab %in% sp3]) #OK
+
+#an example for using corHMM, you can either try or skip it
+set.seed(1985)
+data(primates)
+phy <- primates[[1]]
+phy <- multi2di(phy)
+data <- primates[[2]]
+plot(phy, show.tip.label = FALSE)
+data.sort <- data.frame(data[, 2], data[, 3], row.names = data[, 1])
+data.sort <- data.sort[phy$tip.label, ]
+tiplabels(pch = 16, col = data.sort[, 1] + 1, cex = 0.5)
+tiplabels(pch = 16, col = data.sort[, 2] + 3, cex = 0.5, offset = 0.5)
+
+#with fish data
+phy <- a.tre2
+phy <- multi2di(phy)
+data <- m4.df
+plot(phy, show.tip.label = FALSE)
+data.sort <- data.frame(data[, 2], data[, 3], row.names = data[, 1])
+data.sort <- data.sort[phy$tip.label, ]
+tiplabels(pch = 16, col = data.sort[, 1] , cex = 0.5)
+tiplabels(pch = 16, col = data.sort[, 2] , cex = 0.5, offset = 1.2)
+
+MK_3state <- corHMM(phy = phy, data = data, rate.cat = 1)
+load("corHMMResults.Rsave")
+MK_3state
+plotMKmodel(MK_3state)
+```
 
 
 ## [Figures folder](Figures)
