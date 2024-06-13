@@ -1,0 +1,90 @@
+#corHMM
+library(caper)
+library(ggplot2)
+require(ape)
+require(expm)
+require(corHMM)
+
+m.df <- read.csv2(file = "Fish_care_noNA.csv")
+names(m.df)
+nrow(m.df) #7601
+summary(m.df)
+
+a.tre <- read.tree(file="teleost.tre")
+a.tre <- makeLabel(a.tre)
+a.tre
+
+#Fertilisation
+m.df$Fertilization.mode_ext  <- as.factor(m.df$Fertilization.mode_ext )
+summary(m.df$Fertilization.mode_ext )
+m.df$Care_bias_binary <- as.factor(m.df$Care_bias_binary  )
+summary(m.df$Care_bias_binary  )
+
+#here the script below is for making current Figure 5. 
+#For making Figure 4 which is much more simple, you need the following variables:
+# Fertilization_binary & Care_presence  for Fig4A
+# Fertilization_binary_restricted & Care_presence  for Fig4B
+
+#filter for species with
+m2.df <- m.df[!is.na(m.df$Fertilization.mode_ext) & 
+                !is.na(m.df$Care_bias_binary) 
+              ,]
+nrow(m2.df) #7302 sp
+
+m3.df=subset(m2.df, select= c(Species, Fertilization.mode_ext, Care_bias_binary))
+m3.df
+
+#drop missing species
+(a.lab <- a.tre$tip.label)
+(t <- table(a.lab))
+t[t>1]
+a.lab[order(a.lab)]
+attributes(a.tre)
+
+dobni <-a.lab[!a.lab %in% m3.df$Species]
+(a.tre2 <- drop.tip(a.tre, dobni))
+
+#remove missing species from data frame
+(a2.lab <- a.tre2$tip.label)
+
+(sp <- unique(m3.df$Species))
+t <- table(a2.lab)
+t[t>1]
+t.sp <- table(sp)
+t.sp[t.sp>1]
+(faban <- sp[sp %in% a2.lab])  #7289
+(nincsfaban <- sp[!(sp %in% a2.lab)])  #13
+(nincsfaban <- nincsfaban[order(nincsfaban)])
+m4.df <- m3.df[m3.df$Species %in% faban,]
+summary(m4.df)
+
+row.names(m4.df) <- m4.df$Species
+(sp3 <- unique(m4.df$Species))
+(nincsadatban <- a.lab[!a.lab %in% sp3]) #OK
+
+#an example for using corHMM, you can either try or skip it
+set.seed(1985)
+data(primates)
+phy <- primates[[1]]
+phy <- multi2di(phy)
+data <- primates[[2]]
+plot(phy, show.tip.label = FALSE)
+data.sort <- data.frame(data[, 2], data[, 3], row.names = data[, 1])
+data.sort <- data.sort[phy$tip.label, ]
+tiplabels(pch = 16, col = data.sort[, 1] + 1, cex = 0.5)
+tiplabels(pch = 16, col = data.sort[, 2] + 3, cex = 0.5, offset = 0.5)
+
+#with fish data
+phy <- a.tre2
+phy <- multi2di(phy)
+data <- m4.df
+plot(phy, show.tip.label = FALSE)
+data.sort <- data.frame(data[, 2], data[, 3], row.names = data[, 1])
+data.sort <- data.sort[phy$tip.label, ]
+tiplabels(pch = 16, col = data.sort[, 1] , cex = 0.5)
+tiplabels(pch = 16, col = data.sort[, 2] , cex = 0.5, offset = 1.2)
+
+MK_3state <- corHMM(phy = phy, data = data, rate.cat = 1)
+load("corHMMResults.Rsave")
+MK_3state
+plotMKmodel(MK_3state)
