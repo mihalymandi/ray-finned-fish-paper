@@ -1,0 +1,72 @@
+library(caper)
+library(ape)
+library(phytools)
+s.df <- read.csv2(file = "Fish_care_noNA.csv")
+names(s.df)
+nrow(s.df) #7601
+
+# here you substitute the trees that you used for the previous sensitivity tests
+s.tre <- read.tree(file="teleost.tre")
+
+(sp <- unique(s.df$Species))
+
+#trim database and tree to fit
+(a.lab <- s.tre$tip.label)
+t <- table(a.lab)
+t[t>1]
+t.sp <- table(sp)
+t.sp[t.sp>1]
+(a.lab2 <- unique(a.lab)) 
+(faban <- sp[sp %in% a.lab2])  #7581
+(nincsfaban <- sp[!(sp %in% a.lab2)]) #20
+(nincsfaban <- nincsfaban[order(nincsfaban)])
+(nincsadatban <- a.lab[!a.lab %in% sp])
+(nincsadatban <- nincsadatban[order(nincsadatban)])
+
+f3.df <- s.df[s.df$Species %in% faban,]
+names(f3.df)
+
+# the script below is for analysing transitions in Fertilization.mode_ext
+# you also have to make it for the following variables:
+
+# Parental.care_1
+
+# Care_bias_transitions
+
+# Male_care_duration
+
+# Female_care_duration
+
+f3.df$Fertilization.mode_ext <- as.factor(f3.df$Fertilization.mode_ext)
+summary(f3.df$Fertilization.mode_ext)
+u.df <- na.omit(f3.df[,c("Species","Fertilization.mode_ext")])
+summary(u.df)
+
+row.names(u.df) <- u.df$Species
+(sp3 <- unique(u.df$Species))
+(nincsadatban <- a.lab[!a.lab %in% sp3])
+u.tre <- drop.tip(s.tre, nincsadatban)
+nrow(u.df) #7289
+u.tre
+
+mode<-setNames(u.df[,2],rownames(u.df))
+mode
+ 
+
+#equal rates model
+mtrees_ER<-make.simmap(u.tre,mode,model="ER",nsim=100)
+ER<-summary(mtrees_ER)
+ER
+
+#simmap plot
+cols<-setNames(c("#009E73","#CC79A7", "#E69F00", "#56B4E9"),levels(mode))
+
+#all rates different model
+mtrees_ARD<-make.simmap(u.tre,mode,model="ARD",nsim=100)
+ARD<-summary(mtrees_ARD)
+ARD
+
+#symmetric model
+mtrees_SYM<-make.simmap(u.tre,mode,model="SYM",nsim=100)
+SYM<-summary(mtrees_SYM)
+SYM
