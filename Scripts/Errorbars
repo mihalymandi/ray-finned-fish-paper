@@ -1,0 +1,162 @@
+library(caper)
+library(ape)
+library(diversitree)
+library(ggplot2)
+
+m.df <- read.csv2(file = "Fish_care_noNA.csv")
+names(m.df)
+nrow(m.df) #7601
+summary(m.df)
+m.df$Care_presence <- as.factor(m.df$Care_presence)
+
+a.tre <- read.tree(file="teleost.tre")
+
+m.df$Fertilization.mode_ext<- as.factor(m.df$Fertilization.mode_ext)
+summary(m.df$Fertilization.mode_ext)
+
+m.df$Fertilization.mode_restr<- as.factor(m.df$Fertilization.mode_restr)
+summary(m.df$Fertilization.mode_restr)
+
+#error bar
+
+#onlycaring (for all species skip it)
+m2.df <- m.df[(m.df$Care_presence %in% "Present"),]
+nrow(m2.df) # 2377
+
+#error bar for fertilization modes
+m3.df <- m2.df[!is.na(m2.df$Fertilization.mode_ext),]
+m3.df$Fertilization.mode <- as.factor(m3.df$Fertilization.mode_ext)
+summary(m3.df$Fertilization.mode_ext)
+m3.df$Fertilization.mode_ext <- as.factor(as.character(m3.df$Fertilization.mode_ext))
+names(m3.df)
+(fgtl <- which(names(m3.df)=="Fertilization.mode_ext")) 
+(fug1 <- which(names(m3.df)=="Care_bias_score"))
+summary(m3.df[,c(fgtl,fug1)])
+(ds1 <- plyr::ddply(m3.df, names(m3.df)[fgtl], plyr::summarise,
+                    mean = mean(get(names(m3.df)[fug1]), na.rm=T), 
+                    sd = sd(get(names(m3.df)[fug1]), na.rm=T)))
+p1 <- ggplot() +
+  geom_point(data = ds1, aes(x = get(names(m3.df)[fgtl]), y = mean),
+             pch=15, colour = 'black', size = 5) +
+  geom_errorbar(data = ds1, aes(x = get(names(m3.df)[fgtl]), y = mean,
+                                ymin = mean - sd, ymax = mean + sd), 
+                colour = 'black', size = 1, width = 0.3)   +
+  coord_cartesian(ylim = c(-4, 4)) +
+  geom_hline(yintercept=0, color="black", linewidth = 1, linetype = "dashed")+
+  theme_bw() +
+  theme(axis.text = element_text(size = 16)) + # changes axis labels
+  theme(axis.title = element_text(size = 0)) # change axis titles
+p1
+
+#error bar for care epizodes
+#nest building
+m3.df <- m2.df[!is.na(m2.df$Nest_building),]
+m3.df$Nest_building <- as.factor(m3.df$Nest_building)
+summary(m3.df$Nest_building)
+names(m3.df)
+(fgtl <- which(names(m3.df)=="Nest_building")) 
+(fug1 <- which(names(m3.df)=="Care_bias_score"))
+summary(m3.df[,c(fgtl,fug1)])
+(ds1 <- plyr::ddply(m3.df, names(m3.df)[fgtl], plyr::summarise,
+                    mean = mean(get(names(m3.df)[fug1]), na.rm=T), 
+                    sd = sd(get(names(m3.df)[fug1]), na.rm=T)))
+p1 <- ggplot() +
+  geom_point(data = ds1, aes(x = get(names(m3.df)[fgtl]), y = mean),
+             pch=15, colour = 'black', size = 5) +
+  geom_errorbar(data = ds1, aes(x = get(names(m3.df)[fgtl]), y = mean,
+                                ymin = mean - sd, ymax = mean + sd), 
+                colour = 'black', size = 1, width = 0.3)   +
+  coord_cartesian(ylim = c(-4, 4)) +
+  geom_hline(yintercept=0, color="black", linewidth = 1, linetype = "dashed")+
+  theme_bw() +
+  theme(axis.text = element_text(size = 16)) + # changes axis labels
+  theme(axis.title = element_text(size = 0)) # change axis titles
+p1
+
+#egg care
+m4.df <- m2.df[!is.na(m2.df$Egg_care),]
+m4.df$Egg_care <- as.factor(m4.df$Egg_care)
+summary(m4.df$Egg_care)
+names(m4.df)
+(fgt2 <- which(names(m4.df)=="Egg_care")) 
+(fug2 <- which(names(m4.df)=="Care_bias_score"))
+summary(m3.df[,c(fgt2,fug2)])
+(ds2 <- plyr::ddply(m4.df, names(m4.df)[fgt2], plyr::summarise,
+                    mean = mean(get(names(m4.df)[fug2]), na.rm=T), 
+                    sd = sd(get(names(m4.df)[fug2]), na.rm=T)))
+p2 <- ggplot() +
+  geom_point(data = ds2, aes(x = get(names(m4.df)[fgt2]), y = mean),
+             pch=15, colour = 'black', size = 5) +
+  geom_errorbar(data = ds2, aes(x = get(names(m4.df)[fgt2]), y = mean,
+                                ymin = mean - sd, ymax = mean + sd), 
+                colour = 'black', size = 1, width = 0.3)   +
+  coord_cartesian(ylim = c(-4, 4)) +
+  geom_hline(yintercept=0, color="black", linewidth = 1, linetype = "dashed")+
+  theme_bw() +
+  theme(axis.text = element_text(size = 16)) + # changes axis labels
+  theme(axis.title = element_text(size = 0)) # change axis titles
+p2
+
+#fry care
+m5.df <- m2.df[!is.na(m2.df$Fry_care),]
+m5.df$Fry_care <- as.factor(m5.df$Fry_care)
+summary(m5.df$Fry_care)
+names(m5.df)
+(fgt3 <- which(names(m5.df)=="Fry_care")) 
+(fug3 <- which(names(m5.df)=="Care_bias_score"))
+summary(m5.df[,c(fgt3,fug3)])
+(ds3 <- plyr::ddply(m5.df, names(m5.df)[fgt3], plyr::summarise,
+                    mean = mean(get(names(m5.df)[fug3]), na.rm=T), 
+                    sd = sd(get(names(m5.df)[fug3]), na.rm=T)))
+p3 <- ggplot() +
+  geom_point(data = ds3, aes(x = get(names(m5.df)[fgt3]), y = mean),
+             pch=15, colour = 'black', size = 5) +
+  geom_errorbar(data = ds3, aes(x = get(names(m5.df)[fgt3]), y = mean,
+                                ymin = mean - sd, ymax = mean + sd), 
+                colour = 'black', size = 1, width = 0.3)   +
+  coord_cartesian(ylim = c(-4, 4)) +
+  geom_hline(yintercept=0, color="black", linewidth = 1, linetype = "dashed")+
+  theme_bw() +
+  theme(axis.text = element_text(size = 16)) + # changes axis labels
+  theme(axis.title = element_text(size = 0)) # change axis titles
+p3
+
+#multiplot
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+
+multiplot (p1, p2, p3, cols = 3)
+
